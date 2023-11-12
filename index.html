@@ -69,7 +69,8 @@
         <h1></h1> <!-- Logo is set as the background of the h1 element -->
         <p>Weaving pixels into digital folklore.<br>Find us on <a href="https://twitter.com/digifolk_eth">X</a> and <a href="https://opensea.io">OpenSea</a>.</p>
         <p>First mint free, 0.002E for additional.</p>
-        <button class="mint-button" id="connectWalletButton">Connect Wallet</button>
+        <button class="mint-button" id="walletButton">Connect Wallet</button>
+
         <p id="connectedWallet"></p>
         <div>
             <input type="number" class="token-amount" id="tokenAmount" min="1" max="11" value="1">
@@ -83,22 +84,31 @@
 
       let currentAccount = null;
 
-
-        aasync function toggleWalletConnection() {
-            if (!currentAccount) { // If no wallet is connected, try to connect
-                await requestAccount();
-                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                if (accounts.length > 0) {
-                    currentAccount = accounts[0];
-                    document.getElementById("connectedWallet").innerText = `Connected Wallet: ${currentAccount}`;
-                    document.getElementById("connectWalletButton").innerText = "Disconnect Wallet";
-                }
-            } else { // If a wallet is connected, disconnect it
-                currentAccount = null;
-                document.getElementById("connectedWallet").innerText = `No Wallet Connected`;
-                document.getElementById("connectWalletButton").innerText = "Connect Wallet";
+        async function connectWallet() {
+            await requestAccount();
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            if (accounts.length > 0) {
+                currentAccount = accounts[0];
+                document.getElementById("connectedWallet").innerText = `Connected Wallet: ${currentAccount}`;
+                document.getElementById("walletButton").innerText = "Disconnect Wallet";
+                document.getElementById("walletButton").onclick = disconnectWallet; // Change onclick event to disconnect
             }
         }
+
+        async function disconnectWallet() {
+            if (window.ethereum) {
+                await window.ethereum.request({ method: 'eth_accounts' });
+                currentAccount = null; // Set currentAccount to null
+                document.getElementById("connectedWallet").innerText = `No Wallet Connected`;
+                document.getElementById("walletButton").innerText = "Connect Wallet";
+                document.getElementById("walletButton").onclick = connectWallet; // Change onclick event to connect
+            }
+        }
+
+        // Initially, the button should try to connect the wallet
+        document.getElementById("walletButton").onclick = connectWallet;
+
+
     
       const contractAddress = "0x1d1bf5f3b91fcfcf40501fa20ec3db0dc32804bf";
       const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -139,8 +149,7 @@
         await mintTx.wait();
         alert("Welcome to Digifolk.");
       }
-      
-      document.getElementById("connectWalletButton").onclick = toggleWalletConnection;
+
       document.getElementById("mintTokenButton").onclick = async () => {
         await requestAccount();
         mintToken();
